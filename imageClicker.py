@@ -37,6 +37,7 @@ def loadImages(filenames):
     imageDataList = []
 
     for filename in filenames:
+        printDebug("Loading "+filename)
         template = cv2.imread(os.path.realpath(filename), cv2.IMREAD_UNCHANGED)
 
         if template is None:
@@ -61,6 +62,7 @@ def loadImages(filenames):
             mask = None
 
         imageDataList.append({
+            "filename": filename,
             "base": base,
             "mask": mask,
             "hh": hh,
@@ -102,7 +104,7 @@ def locateCenterOnScreen(imageData):
         return None
     
     
-    printDebug("correlation: "+str(max_val))
+    printDebug("correlation: "+str(max_val) + " " + imageData["filename"])
 
     if max_val >= args.threshold:
         x = max_loc[0] + imageData["ww"] // 2
