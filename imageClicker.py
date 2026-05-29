@@ -29,6 +29,7 @@ pyautogui.PAUSE = args.sleep  # Default is 0.1
 def printDebug(string):
     if args.verbose: print(string)
 
+
 printDebug(args)
 
 
@@ -55,6 +56,8 @@ def loadImages(filenames):
 
 def getScreenshot():
     return cv2.cvtColor(np.array(pyautogui.screenshot()), cv2.COLOR_RGB2BGR)
+    
+    
 def locateCenterOnScreen(imageData):
     screen = getScreenshot()
 
