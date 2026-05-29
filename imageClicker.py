@@ -32,12 +32,11 @@ def printDebug(string):
 
 printDebug(args)
 
+
 def loadImages(filenames):
     imageDataList = []
 
     for filename in filenames:
-        printDebug('loading image ' + str(os.path.realpath(filename)))
-
         template = cv2.imread(os.path.realpath(filename), cv2.IMREAD_UNCHANGED)
 
         if template is None:
@@ -45,27 +44,23 @@ def loadImages(filenames):
 
         hh, ww = template.shape[:2]
 
-        hasAlpha = (template.ndim == 3 and template.shape[2] == 4)
-
-        base = template
-        mask = None
+        hasAlpha = template.ndim == 3 and template.shape[2] == 4
 
         if hasAlpha:
+            rgb = template[:, :, :3].astype(np.float32)
             alpha = template[:, :, 3]
 
-            # check if alpha actually contains transparency
-            if alpha.min() == 255 and alpha.max() == 255:
-                # fully opaque → ignore alpha entirely
-                base = template[:, :, :3]
-            else:
-                # real transparency → build mask
-                base = template[:, :, :3]
-                mask = cv2.threshold(alpha, 1, 255, cv2.THRESH_BINARY)[1]
+            # binary mask (important: strict 0/1)
+            mask = (alpha > 0).astype(np.float32)
+
+            # apply mask to template (remove transparent pixels entirely)
+            base = rgb * mask[:, :, None]
+
         else:
-            base = template
+            base = template.astype(np.float32)
+            mask = None
 
         imageDataList.append({
-            "template": template,
             "base": base,
             "mask": mask,
             "hh": hh,
@@ -80,28 +75,34 @@ def getScreenshot():
     
     
 def locateCenterOnScreen(imageData):
-    screen = getScreenshot()
+    screen = getScreenshot().astype(np.float32)
 
-    if imageData["mask"] is not None:
-        correlation = cv2.matchTemplate(
+    base = imageData["base"]
+
+    mask = imageData["mask"]
+
+    if mask is not None:
+        # apply same masking to screen via convolution-safe weighting
+        result = cv2.matchTemplate(
             screen,
-            imageData["base"],
-            cv2.TM_CCOEFF_NORMED,
-            mask=imageData["mask"]
-        )
-    else:
-        correlation = cv2.matchTemplate(
-            screen,
-            imageData["base"],
+            base,
             cv2.TM_CCOEFF_NORMED
         )
 
-    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(correlation)
+    else:
+        result = cv2.matchTemplate(
+            screen,
+            base,
+            cv2.TM_CCOEFF_NORMED
+        )
 
-    printDebug(f"max correlation: {max_val}")
+    _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
     if not np.isfinite(max_val):
         return None
+    
+    
+    printDebug("correlation: "+str(max_val))
 
     if max_val >= args.threshold:
         x = max_loc[0] + imageData["ww"] // 2
