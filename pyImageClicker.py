@@ -11,10 +11,11 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument('filenames', nargs='+')
-parser.add_argument('-c', '--count', type=int, default=1) # values less than 0 for infinite clicks
+parser.add_argument('-c', '--count', type=int, default=1, help="times to click, values less than 0 for infinite clicks")
 parser.add_argument('-v', '--verbose', default=False, action='store_true')
-parser.add_argument('-s', '--sleep', type=float, default=0.2)
-parser.add_argument('-t', '--threshold', type=float, default=0.9)
+parser.add_argument('-s', '--sleep', type=float, default=0.2, help="time to sleep after each click OR each failed search")
+parser.add_argument('-t', '--threshold', type=float, default=0.9, help="image matching confidence")
+parser.add_argument('-z', '--zero', default=False, action='store_true', help="move cursor to 0,0 after each click")
 
 args = parser.parse_args()
 
@@ -58,14 +59,20 @@ def main(args):
         printDebug("positions found: " + str(positionsFound))
         
         if not positionsFound:
+            sleep(args.sleep)
             continue
             
         for position in positionsFound:
             printDebug("Clicking at " + str(position))
             pyautogui.click(position[0], position[1])
-            clicksDone = clicksDone + 1
+            sleep(0.1)
+            pyautogui.moveTo(1,1)
+            sleep(max(0.1, args.sleep - 0.1))
+        
+        clicksDone = clicksDone + 1
+        printDebug('clicked: ' + str(clicksDone) + '/' + str(args.count))
             
-        sleep(args.sleep)
+        
 
 
 main(args)
