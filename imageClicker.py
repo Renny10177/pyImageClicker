@@ -79,33 +79,41 @@ def locateCenterOnScreen(imageData):
 def main(args):
     
     imageDataList = loadImages(args.filenames)
-    
-    
     clicksDone = 0
+    
     while clicksDone < args.count:
         
-        
         clickSuccess = False
+        
         for imageData in imageDataList:
             
             pos = None
+            
             try:
                 pos = locateCenterOnScreen(imageData)
                 printDebug("Found "+str(pos))
-            except Exception as e: printDebug(e)
+                
+            except Exception as e:
+                printDebug(e)
             
             if pos:
                 try:
                     printDebug("clicking "+str(pos))
+                    
                     pyautogui.click(x=pos[0], y=pos[1])
                     
                     clickSuccess = True
                     
-                    if args.zero: pyautogui.moveTo(1,1)
-                except Exception as e: printDebug(e)
+                    if args.zero:
+                        pyautogui.moveTo(1,1)
+                        
+                        
+                except Exception as e:
+                    printDebug(e)
         
         if clickSuccess:
             clicksDone = clicksDone + 1
+            
             printDebug('clicked: ' + str(clicksDone) + '/' + str(args.count))
             
         
