@@ -32,24 +32,45 @@ def printDebug(string):
 
 printDebug(args)
 
-
 def loadImages(filenames):
     imageDataList = []
 
     for filename in filenames:
         printDebug('loading image ' + str(os.path.realpath(filename)))
 
-        template = cv2.imread(os.path.realpath(filename), cv2.IMREAD_COLOR)
+        template = cv2.imread(os.path.realpath(filename), cv2.IMREAD_UNCHANGED)
+
+        if template is None:
+            raise ValueError(f"Failed to load image: {filename}")
 
         hh, ww = template.shape[:2]
 
-        mydict = {
+        hasAlpha = (template.ndim == 3 and template.shape[2] == 4)
+
+        base = template
+        mask = None
+
+        if hasAlpha:
+            alpha = template[:, :, 3]
+
+            # check if alpha actually contains transparency
+            if alpha.min() == 255 and alpha.max() == 255:
+                # fully opaque → ignore alpha entirely
+                base = template[:, :, :3]
+            else:
+                # real transparency → build mask
+                base = template[:, :, :3]
+                mask = cv2.threshold(alpha, 1, 255, cv2.THRESH_BINARY)[1]
+        else:
+            base = template
+
+        imageDataList.append({
             "template": template,
+            "base": base,
+            "mask": mask,
             "hh": hh,
             "ww": ww
-        }
-
-        imageDataList.append(mydict)
+        })
 
     return imageDataList
 
@@ -61,15 +82,26 @@ def getScreenshot():
 def locateCenterOnScreen(imageData):
     screen = getScreenshot()
 
-    correlation = cv2.matchTemplate(
-        screen,
-        imageData["template"],
-        cv2.TM_CCOEFF_NORMED
-    )
+    if imageData["mask"] is not None:
+        correlation = cv2.matchTemplate(
+            screen,
+            imageData["base"],
+            cv2.TM_CCOEFF_NORMED,
+            mask=imageData["mask"]
+        )
+    else:
+        correlation = cv2.matchTemplate(
+            screen,
+            imageData["base"],
+            cv2.TM_CCOEFF_NORMED
+        )
 
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(correlation)
 
     printDebug(f"max correlation: {max_val}")
+
+    if not np.isfinite(max_val):
+        return None
 
     if max_val >= args.threshold:
         x = max_loc[0] + imageData["ww"] // 2
