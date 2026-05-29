@@ -14,7 +14,7 @@ parser.add_argument('filenames', nargs='+')
 parser.add_argument('-c', '--count', type=int, default=1, help="times to click, values less than 0 for infinite clicks")
 parser.add_argument('-v', '--verbose', default=False, action='store_true')
 parser.add_argument('-s', '--sleep', type=float, default=0.01, help="time to sleep after each click OR each failed search")
-parser.add_argument('-t', '--threshold', type=float, default=0.9, help="image matching confidence")
+parser.add_argument('-t', '--threshold', type=float, default=0.95, help="image matching confidence")
 parser.add_argument('-z', '--zero', default=False, action='store_true', help="move cursor to 0,0 after each click")
 #parser.add_argument('-g', '--grayscale', default=False, action='store_true', help='search in grayscale for 30%% performance boost')
 
@@ -94,7 +94,7 @@ def main(args):
             
             try:
                 pos = locateCenterOnScreen(imageData)
-                printDebug("Found "+str(pos))
+                if pos: printDebug("Found "+str(pos))
                 
             except Exception as e:
                 printDebug(e)
