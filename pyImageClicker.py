@@ -30,15 +30,6 @@ def printDebug(string):
 
 printDebug(args)
 
-def findImagesOnScreen(imageDataList): #takes a list of Image objects and searches for each one, returning a list of Position objects
-    output = []
-    for imageData in imageDataList:
-        try:
-            output.append(pyautogui.locateCenterOnScreen(imageData))
-        except Exception as e:
-            printDebug(e)
-    return output
-
 
 def loadImages(filenames): #takes list of filenames and outputs list of ImageWrapper objects
     imageDataList = []
@@ -56,23 +47,29 @@ def main(args):
     clicksDone = 0
     while clicksDone < args.count:
         
-        positionsFound = findImagesOnScreen(imageDataList)
-        printDebug("positions found: " + str(positionsFound))
         
-        if not positionsFound:
-            print('positions not found...')
-            #sleep(args.sleep)
-            continue
+        clickSuccess = False
+        for imageData in imageDataList:
             
-        for position in positionsFound:
-            printDebug("Clicking at " + str(position))
-            pyautogui.click(position[0], position[1])
-            if args.zero: pyautogui.moveTo(1,1)
+            pos = None
+            try:
+                pos = pyautogui.locateCenterOnScreen(imageData)
+                printDebug("Found "+str(pos))
+            except: pass
             
-            #sleep(args.sleep)
+            if pos:
+                try:
+                    printDebug("clicking "+str(pos))
+                    pyautogui.click(pos)
+                    
+                    clickSuccess = True
+                    
+                    if args.zero: pyautogui.moveTo(1,1)
+                except Exception as e: printDebug(e)
         
-        clicksDone = clicksDone + 1
-        printDebug('clicked: ' + str(clicksDone) + '/' + str(args.count))
+        if clickSuccess:
+            clicksDone = clicksDone + 1
+            printDebug('clicked: ' + str(clicksDone) + '/' + str(args.count))
             
         
 
