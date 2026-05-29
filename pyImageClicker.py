@@ -1,7 +1,6 @@
 from time import sleep
 import argparse
 import pyautogui
-import math
 import PIL
 import os
 
@@ -19,7 +18,7 @@ parser.add_argument('-z', '--zero', default=False, action='store_true', help="mo
 
 args = parser.parse_args()
 
-if args.count <= 0: args.count = math.infinity
+if args.count <= 0: args.count = float('inf')
 
 
 
