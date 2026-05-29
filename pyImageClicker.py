@@ -65,9 +65,12 @@ def main(args):
         for position in positionsFound:
             printDebug("Clicking at " + str(position))
             pyautogui.click(position[0], position[1])
-            sleep(0.1)
-            pyautogui.moveTo(1,1)
-            sleep(max(0.1, args.sleep - 0.1))
+            if args.zero:
+                sleep(0.1)
+                pyautogui.moveTo(1,1)
+                sleep(max(0.1, args.sleep - 0.1))
+            else:
+                sleep(args.sleep)
         
         clicksDone = clicksDone + 1
         printDebug('clicked: ' + str(clicksDone) + '/' + str(args.count))
